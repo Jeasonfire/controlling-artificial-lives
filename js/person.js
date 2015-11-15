@@ -51,7 +51,7 @@ var SURNAME_SUFFIXES = ["ian", "en", "ell", "er", "ly"];
 var WORKING_AGE = 10 + Math.round(Math.random() * 16);
 var ELDER_AGE = 50 + Math.round(Math.random() * 30);
 
-var MAX_FOOD_CONSUMPTION = 0.1 + 0.3 * Math.random() * Math.random();
+var MAX_FOOD_CONSUMPTION = 0.05 + 0.15 * Math.random() * Math.random();
 var MAX_HUNGER_LEVEL = MAX_FOOD_CONSUMPTION * 10 + 2 * Math.random();
 
 function Person(father, mother, exists, sex, sexuality, age) {
@@ -65,6 +65,7 @@ function Person(father, mother, exists, sex, sexuality, age) {
     }
     this.age = age !== undefined ? age : 0;
     this.hunger = 0;
+    this.house = -1;
     this.sex = sex !== undefined ? sex : Math.random() < 0.5 ? "male" : "female";
     this.work = "";
     this.workEfficiency = 0.25 + Math.random() * 0.5;
@@ -90,6 +91,13 @@ Person.prototype = {
             return false;
         }
         return !this.isChild() && !this.isOld() && this.work == "";
+    },
+
+    getInRelationShipWith: function(otherPerson) {
+        if (otherPerson.house != -1) {
+            this.house = otherPerson.house;
+        }
+        this.inRelationshipWith = otherPerson;
     },
 
     divorce: function() {

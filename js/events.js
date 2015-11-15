@@ -90,8 +90,8 @@ chances.push([function(person) {
                     (person.sex != person1.sex &&
                     (person.sexuality == "any" || person.sexuality == "opposite") &&
                     (person1.sexuality == "any" || person1.sexuality == "opposite"))) {
-                person.inRelationshipWith = person1;
-                person1.inRelationshipWith = person;
+                person.getInRelationShipWith(person1);
+                person1.getInRelationShipWith(person);
                 historyEntries.push(person.getName() + " and " + person1.getName() + " are now in a relationship!");
                 return;
             }

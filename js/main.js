@@ -21,13 +21,13 @@ var AGE_PER_SECOND = 0.5;
  * Also make sure at least 2 of them are probable to make offspring.
  */
 var people = [
-    new Person(undefined, undefined, undefined, "male", "opposite", 10 + Math.random() * 10),
-    new Person(undefined, undefined, undefined, "female", "opposite", 10 + Math.random() * 10),
-    new Person(undefined, undefined, undefined, "male", undefined, 10 + Math.random() * 10),
-    new Person(undefined, undefined, undefined, "female", undefined, 10 + Math.random() * 10),
-    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 10),
-    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 10),
-    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 10)
+    new Person(undefined, undefined, undefined, "male", "opposite", WORKING_AGE + Math.random() * 5),
+    new Person(undefined, undefined, undefined, "female", "opposite", WORKING_AGE + Math.random() * 5),
+    new Person(undefined, undefined, undefined, "male", undefined, WORKING_AGE + Math.random() * 5),
+    new Person(undefined, undefined, undefined, "female", undefined, WORKING_AGE + Math.random() * 5),
+    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 15),
+    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 15),
+    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 15)
 ];
 // Shuffle the list to obfuscate pre-made rolls
 people.sort(function() {return 9.5 - Math.random()});
@@ -36,6 +36,12 @@ var resources = {
     food: 10,
     build: 10
 }
+var houses = [
+    new House(),
+    new House(),
+    new House(),
+    new House()
+];
 var historyEntries = [];
 var processes = [];
 
@@ -62,6 +68,16 @@ function gatherBuild() {
     processes.push(newProcess);
 }
 
+function makeHouse() {
+    if (resources.build < 5) {
+        return;
+    }
+    resources.build -= 5;
+    var newProcess = new Process("Making a house", 40000, 200, function () {houses.push(new House());});
+    newProcess.assignWorker(people);
+    processes.push(newProcess);
+}
+
 function removePerson(person) {
     for (var i = 0; i < people.length; i++) {
         if (people[i] == person) {
@@ -82,6 +98,10 @@ function update(delta) {
             }
         } else {
             people[i].hunger += people[i].foodConsumption() * delta;
+        }
+        for (var j = 0; j < houses.length; j++) {
+            houses[j].assignHouseFor(people[i]);
+            houses[j].updateInhabitant(people[i]);
         }
         activateEvent(delta, people[i]);
     }
@@ -113,6 +133,11 @@ gameloopThread.onmessage = function(data) {
     }
 
     var resourceParagraph = "<h3>Resources:</h3><p><ul><li><b>Food</b>: " + resources.food.toFixed(1) + "</li><li><b>Build</b>: " + resources.build.toFixed(1) + "</li></ul></p>";
+    resourceParagraph += "<h3>Buildings:</h3><ul>";
+    for (var i = 0; i < houses.length; i++) {
+        resourceParagraph += "<li>" + houses[i].getDescription() + "</li>"
+    }
+    resourceParagraph += "</ul>";
 
     var processesParagraph = "<h3>Current works:</h3><ul>";
     for (var i = 0; i < processes.length; i++) {
