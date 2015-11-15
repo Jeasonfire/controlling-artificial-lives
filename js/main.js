@@ -52,7 +52,7 @@ function update(delta) {
         var lastAge = people[i].age;
         people[i].age += delta * AGE_PER_SECOND;
         if (Math.floor(lastAge / 10.0) != Math.floor(people[i].age / 10.0)) {
-            historyEntries.push(people[i].getName() + " just turned " + Math.round(people[i].age) + "!");
+            historyEntries.push("<b>" + people[i].getName() + "</b> just turned " + Math.round(people[i].age) + "!");
         }
     }
 }
