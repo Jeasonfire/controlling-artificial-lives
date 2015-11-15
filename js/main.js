@@ -45,13 +45,8 @@ var houses = [
 var historyEntries = [];
 var processes = [];
 
-function makePerson() {
-    var person = new Person();
-    if (people.length >= 2) {
-        var fathersIndex = Math.floor(Math.random() * people.length);
-        var mothersIndex = Math.floor(Math.random() * people.length);
-        person = new Person(people[fathersIndex], people[mothersIndex]);
-    }
+function makePerson(father, mother) {
+    var person = new Person(father, mother);
     people.push(person);
     historyEntries.push(person.getName() + " was just born!");
 }
@@ -125,6 +120,8 @@ gameloopThread.onmessage = function(data) {
         for (var i = people.length - 1; i >= 0; i--) {
             peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(0) +
                 "<br>&nbsp&nbspSex: " + people[i].sex +
+                (!people[i].father.exists ? "" : "<br>&nbsp&nbspFather: " + people[i].father.getName()) +
+                (!people[i].mother.exists ? "" : "<br>&nbsp&nbspMother: " + people[i].mother.getName()) +
                 (people[i].hunger == 0 ? "" : "<br>&nbsp&nbspHunger level: " + people[i].hunger.toFixed(2)) +
                 (!people[i].inRelationshipWith.exists ? "" : "<br>&nbsp&nbspIn a relationship with: " + people[i].inRelationshipWith.getName()) +
                 (people[i].work == "" ? "" : "<br>&nbsp&nbspCurrently working on: " + people[i].work) + "</li><br>";

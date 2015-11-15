@@ -47,9 +47,34 @@ function getChance(chance) {
  * and y is the body of the function you want to run
  */
 
+// Chance of a baby being born
+chances.push([function(person) {
+    if (!person.inRelationshipWith.exists) {
+        return 0;
+    }
+    if (person.sex == person.inRelationshipWith.sex) {
+        return 0;
+    }
+    if (person.age < WORKING_AGE || person.inRelationshipWith.age < WORKING_AGE ||
+        person.age > ELDER_AGE || person.age > ELDER_AGE) {
+        return 0;
+    }
+    return 0.02;
+}, function(person) {
+    var father, mother;
+    if (person.sex == "male") {
+        father = person;
+        mother = person.inRelationshipWith;
+    } else {
+        father = person.inRelationshipWith;
+        mother = person;
+    }
+    makePerson(father, mother);
+}]);
+
 // Chance of death
 chances.push([function(person) {
-    var ageDeath = Math.pow(Math.min(person.age, 80.0) / 81.0, 8);
+    var ageDeath = Math.pow(Math.min(person.age, ELDER_AGE) / (ELDER_AGE + 1.0), 8);
     var hungerDeath = Math.pow(person.hunger / MAX_HUNGER_LEVEL, 4);
     return ageDeath + hungerDeath - (ageDeath * hungerDeath);
 }, function(person) {
@@ -83,6 +108,7 @@ chances.push([function(person) {
     for (var j = 0; j < people.length; j++) {
         var person1 = people[j];
         if (isNotRelative(person, person1) && isNotRelative(person1, person) &&
+                person.age > WORKING_AGE && person1.age > WORKING_AGE &&
                 !person1.inRelationshipWith.exists && Math.random() < 0.2) {
             if ((person.sex == person1.sex &&
                     (person.sexuality == "any" || person.sexuality == "same") &&
