@@ -48,8 +48,10 @@ for (var i = 0; i < CONSONANTS.length; i++) {
 // TODO: Add more of these
 var SURNAME_SUFFIXES = ["ian", "en", "ell", "er", "ly"];
 
-var WORKING_AGE = 0;// 10 + Math.round(Math.random() * 16);
-var ELDER_AGE = 1000;//50 + Math.round(Math.random() * 30);
+var WORKING_AGE = 10 + Math.round(Math.random() * 16);
+var ELDER_AGE = 50 + Math.round(Math.random() * 30);
+
+var MAX_FOOD_CONSUMPTION = 0.1 + 0.3 * Math.random() * Math.random();
 
 function Person(father, mother, exists, sex, sexuality, age) {
     if (exists === undefined) {
@@ -61,8 +63,10 @@ function Person(father, mother, exists, sex, sexuality, age) {
         }
     }
     this.age = age !== undefined ? age : 0;
+    this.hunger = 0;
     this.sex = sex !== undefined ? sex : Math.random() < 0.5 ? "male" : "female";
     this.work = "";
+    this.workEfficiency = 0.25 + Math.random() * 0.5;
     this.inRelationshipWith = new Person("", "", false);
     this.sexuality = sexuality !== undefined ? sexuality : Math.random() < 0.85
         ? "opposite" : Math.random() < 0.5 ? "any" : Math.random() < 0.85 ? "same" : "none";
@@ -85,6 +89,10 @@ Person.prototype = {
             return false;
         }
         return !this.isChild() && !this.isOld() && this.work == "";
+    },
+
+    foodConsumption: function() {
+        return MAX_FOOD_CONSUMPTION * (1.0 - Math.abs(Math.min(this.age, 60.0) - 30.0) / 31.0);
     },
 
     isChild: function() {

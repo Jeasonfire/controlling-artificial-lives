@@ -33,8 +33,8 @@ var people = [
 people.sort(function() {return 9.5 - Math.random()});
 
 var resources = {
-    food: 0,
-    build: 0
+    food: 10,
+    build: 10
 }
 var historyEntries = [];
 var processes = [];
@@ -64,7 +64,17 @@ function gatherBuild() {
 
 function update(delta) {
     for (var i = 0; i < people.length; i++) {
-        people[i].age += delta * AGE_PER_SECOND;
+        people[i].age += AGE_PER_SECOND * delta;
+        if (resources.food >= people[i].foodConsumption() * delta) {
+            resources.food -= people[i].foodConsumption() * delta;
+            if (resources.food > 0 && people[i].hunger > 0) {
+                var amt = Math.min(resources.food, people[i].hunger);
+                people[i].hunger -= amt;
+                resources.food -= amt;
+            }
+        } else {
+            people[i].hunger += people[i].foodConsumption() * delta;
+        }
     }
     activateEvents(delta);
 }
@@ -81,14 +91,15 @@ gameloopThread.onmessage = function(data) {
 
     var peopleParagraph = "<h3>People:</h3><ul>";
     for (var i = people.length - 1; i >= 0; i--) {
-        peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(1) +
+        peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(0) +
             "<br>&nbsp&nbspSex: " + people[i].sex +
-            (!people[i].inRelationshipWith.exists ? "" : "<br>&nbsp&nbspIn a relationship with: " + people[i].inRelationshipWith.getName() + "") +
+            (people[i].hunger == 0 ? "" : "<br>&nbsp&nbspHunger level: " + people[i].hunger.toFixed(2)) +
+            (!people[i].inRelationshipWith.exists ? "" : "<br>&nbsp&nbspIn a relationship with: " + people[i].inRelationshipWith.getName()) +
             (people[i].work == "" ? "" : "<br>&nbsp&nbspCurrently working on: " + people[i].work) + "</li><br>";
     }
     peopleParagraph += "</ul>";
 
-    var resourceParagraph = "<h3>Resources:</h3><p><ul><li><b>Food</b>: " + resources.food + "</li><li><b>Build</b>: " + resources.build + "</li></ul></p>";
+    var resourceParagraph = "<h3>Resources:</h3><p><ul><li><b>Food</b>: " + resources.food.toFixed(1) + "</li><li><b>Build</b>: " + resources.build.toFixed(1) + "</li></ul></p>";
 
     var processesParagraph = "<h3>Current works:</h3><ul>";
     for (var i = 0; i < processes.length; i++) {
