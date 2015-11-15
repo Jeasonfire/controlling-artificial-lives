@@ -48,35 +48,63 @@ for (var i = 0; i < CONSONANTS.length; i++) {
 // TODO: Add more of these
 var SURNAME_SUFFIXES = ["ian", "en", "ell", "er", "ly"];
 
-var WORKING_AGE = 10 + Math.round(Math.random() * 16);
-var ELDER_AGE = 50 + Math.round(Math.random() * 30);
+var WORKING_AGE = 0;// 10 + Math.round(Math.random() * 16);
+var ELDER_AGE = 1000;//50 + Math.round(Math.random() * 30);
 
-function Person(father, mother) {
-    this.age = 0;
-    this.sex = Math.random() < 0.5 ? "male" : "female";
+function Person(father, mother, exists, sex, sexuality, age) {
+    if (exists === undefined) {
+        this.exists = true;
+    } else {
+        this.exists = exists;
+        if (!exists) {
+            return;
+        }
+    }
+    this.age = age !== undefined ? age : 0;
+    this.sex = sex !== undefined ? sex : Math.random() < 0.5 ? "male" : "female";
     this.work = "";
+    this.inRelationshipWith = new Person("", "", false);
+    this.sexuality = sexuality !== undefined ? sexuality : Math.random() < 0.85
+        ? "opposite" : Math.random() < 0.5 ? "any" : Math.random() < 0.85 ? "same" : "none";
     this.name = this.generateFirstName();
     this.surname = this.generateSurname(father, mother);
+    this.father = father !== undefined ? father : new Person("", "", false, "male");
+    this.mother = mother !== undefined ? mother : new Person("", "", false, "female");
 }
 
 Person.prototype = {
     getName: function() {
-        return this.name + (this.surname != "" ? " " + this.surname : "");
+        if (!this.exists) {
+            return "";
+        }
+        return "<em style='color:" + (this.sex == "male" ? "cyan" : "orange") + ";'>" + this.name + (this.surname != "" ? " " + this.surname : "") + "</em>";
     },
 
     eligibleForWork: function() {
+        if (!this.exists) {
+            return false;
+        }
         return !this.isChild() && !this.isOld() && this.work == "";
     },
 
     isChild: function() {
-        return false;//this.age < WORKING_AGE;
+        if (!this.exists) {
+            return false;
+        }
+        return this.age < WORKING_AGE;
     },
 
     isOld: function() {
-        return false;//this.age > ELDER_AGE;
+        if (!this.exists) {
+            return false;
+        }
+        return this.age > ELDER_AGE;
     },
 
     generateFirstName: function() {
+        if (!this.exists) {
+            return "";
+        }
         var consonants = [];
         for (var i = 0; i < 3; i++) {
             consonants.push(CONSONANTS_WITH_FREQ[Math.floor(Math.random() * CONSONANTS_WITH_FREQ.length)]);
@@ -100,6 +128,9 @@ Person.prototype = {
     },
 
     generateSurname: function(father, mother) {
+        if (!this.exists) {
+            return "";
+        }
         if (father == undefined || mother == undefined) {
             return "";
         }

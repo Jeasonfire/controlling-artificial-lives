@@ -16,7 +16,22 @@
  */
 
 var AGE_PER_SECOND = 0.5;
-var people = [];
+/* Add some definitely male and female people so the people will survive at
+ * least a while. Also a few randoms just for a bit of the random feel.
+ * Also make sure at least 2 of them are probable to make offspring.
+ */
+var people = [
+    new Person(undefined, undefined, undefined, "male", "opposite", 10 + Math.random() * 10),
+    new Person(undefined, undefined, undefined, "female", "opposite", 10 + Math.random() * 10),
+    new Person(undefined, undefined, undefined, "male", undefined, 10 + Math.random() * 10),
+    new Person(undefined, undefined, undefined, "female", undefined, 10 + Math.random() * 10),
+    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 10),
+    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 10),
+    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 10)
+];
+// Shuffle the list to obfuscate pre-made rolls
+people.sort(function() {return 9.5 - Math.random()});
+
 var resources = {
     food: 0,
     build: 0
@@ -32,7 +47,7 @@ function makePerson() {
         person = new Person(people[fathersIndex], people[mothersIndex]);
     }
     people.push(person);
-    historyEntries.push("<b>" + person.getName() + "</b> was just born!");
+    historyEntries.push(person.getName() + " was just born!");
 }
 
 function gatherFood() {
@@ -49,12 +64,9 @@ function gatherBuild() {
 
 function update(delta) {
     for (var i = 0; i < people.length; i++) {
-        var lastAge = people[i].age;
         people[i].age += delta * AGE_PER_SECOND;
-        if (Math.floor(lastAge / 10.0) != Math.floor(people[i].age / 10.0)) {
-            historyEntries.push("<b>" + people[i].getName() + "</b> just turned " + Math.round(people[i].age) + "!");
-        }
     }
+    activateEvents(delta);
 }
 
 /* The game loop code (a very hacky loop system that works on its own thread with a worker) */
@@ -69,8 +81,9 @@ gameloopThread.onmessage = function(data) {
 
     var peopleParagraph = "<h3>People:</h3><ul>";
     for (var i = people.length - 1; i >= 0; i--) {
-        peopleParagraph += "<li><b>" + people[i].getName() + "</b>:<br>&nbsp&nbspAge: " + people[i].age.toFixed(1) +
+        peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(1) +
             "<br>&nbsp&nbspSex: " + people[i].sex +
+            (!people[i].inRelationshipWith.exists ? "" : "<br>&nbsp&nbspIn a relationship with: " + people[i].inRelationshipWith.getName() + "") +
             (people[i].work == "" ? "" : "<br>&nbsp&nbspCurrently working on: " + people[i].work) + "</li><br>";
     }
     peopleParagraph += "</ul>";
@@ -93,7 +106,7 @@ gameloopThread.onmessage = function(data) {
                 processes[i].assignWorker(people);
             }
         } else {
-            historyEntries.push("<b>" + processes[i].worker.getName() + "</b> finished work: <i>" + processes[i].name + "</i>");
+            historyEntries.push(processes[i].worker.getName() + " finished work: <i>" + processes[i].name + "</i>");
             processes.splice(i, 1);
         }
     }
