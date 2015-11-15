@@ -18,11 +18,11 @@
 var chances = [];
 var currentDelta = 0;
 
-function activateEvents(delta) {
+function activateEvent(delta, person) {
     currentDelta = delta;
     for (var i = 0; i < chances.length; i++) {
-        if (roll(chances[i][0]())) {
-            chances[i][1]();
+        if (roll(chances[i][0](person))) {
+            chances[i][1](person);
         }
     }
 }
@@ -47,10 +47,21 @@ function getChance(chance) {
  * and y is the body of the function you want to run
  */
 
+// Chance of death
+chances.push([function(person) {
+    var ageDeath = Math.pow(Math.min(person.age, 80.0) / 81.0, 8);
+    var hungerDeath = Math.pow(person.hunger / MAX_HUNGER_LEVEL, 4);
+    return ageDeath + hungerDeath - (ageDeath * hungerDeath);
+}, function(person) {
+    historyEntries.push(person.getName() + " died!");
+    person.exists = false;
+    removePerson(person);
+}]);
+
 // Chance of two people getting in a relationship
-chances.push([function() {
+chances.push([function(person) {
     return 0.2;
-}, function() {
+}, function(person) {
     /*
      * This function prevents incestuous relationships (which are still probable,
      *  but *very* rare.) It checks the following:
@@ -66,26 +77,23 @@ chances.push([function() {
             (!person0.father.exists || !person1.father.exists))));
     }
 
-    for (var i = 0; i < people.length; i++) {
-        var person0 = people[i];
-        if (person0.inRelationshipWith.exists) {
-            continue;
-        }
-        for (var j = 0; j < people.length; j++) {
-            var person1 = people[j];
-            if (isNotRelative(person0, person1) && isNotRelative(person1, person0) &&
-                    !person1.inRelationshipWith.exists && Math.random() < 0.2) {
-                if ((person0.sex == person1.sex &&
-                        (person0.sexuality == "any" || person0.sexuality == "same") &&
-                        (person1.sexuality == "any" || person1.sexuality == "same")) ||
-                        (person0.sex != person1.sex &&
-                        (person0.sexuality == "any" || person0.sexuality == "opposite") &&
-                        (person1.sexuality == "any" || person1.sexuality == "opposite"))) {
-                    person0.inRelationshipWith = person1;
-                    person1.inRelationshipWith = person0;
-                    historyEntries.push(person0.getName() + " and " + person1.getName() + " are now in a relationship!");
-                    return;
-                }
+    if (person.inRelationshipWith.exists) {
+        return;
+    }
+    for (var j = 0; j < people.length; j++) {
+        var person1 = people[j];
+        if (isNotRelative(person, person1) && isNotRelative(person1, person) &&
+                !person1.inRelationshipWith.exists && Math.random() < 0.2) {
+            if ((person.sex == person1.sex &&
+                    (person.sexuality == "any" || person.sexuality == "same") &&
+                    (person1.sexuality == "any" || person1.sexuality == "same")) ||
+                    (person.sex != person1.sex &&
+                    (person.sexuality == "any" || person.sexuality == "opposite") &&
+                    (person1.sexuality == "any" || person1.sexuality == "opposite"))) {
+                person.inRelationshipWith = person1;
+                person1.inRelationshipWith = person;
+                historyEntries.push(person.getName() + " and " + person1.getName() + " are now in a relationship!");
+                return;
             }
         }
     }

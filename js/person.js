@@ -52,6 +52,7 @@ var WORKING_AGE = 10 + Math.round(Math.random() * 16);
 var ELDER_AGE = 50 + Math.round(Math.random() * 30);
 
 var MAX_FOOD_CONSUMPTION = 0.1 + 0.3 * Math.random() * Math.random();
+var MAX_HUNGER_LEVEL = MAX_FOOD_CONSUMPTION * 10 + 2 * Math.random();
 
 function Person(father, mother, exists, sex, sexuality, age) {
     if (exists === undefined) {
@@ -67,7 +68,7 @@ function Person(father, mother, exists, sex, sexuality, age) {
     this.sex = sex !== undefined ? sex : Math.random() < 0.5 ? "male" : "female";
     this.work = "";
     this.workEfficiency = 0.25 + Math.random() * 0.5;
-    this.inRelationshipWith = new Person("", "", false);
+    this.divorce();
     this.sexuality = sexuality !== undefined ? sexuality : Math.random() < 0.85
         ? "opposite" : Math.random() < 0.5 ? "any" : Math.random() < 0.85 ? "same" : "none";
     this.name = this.generateFirstName();
@@ -89,6 +90,10 @@ Person.prototype = {
             return false;
         }
         return !this.isChild() && !this.isOld() && this.work == "";
+    },
+
+    divorce: function() {
+        this.inRelationshipWith = new Person("", "", false);
     },
 
     foodConsumption: function() {

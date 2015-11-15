@@ -62,6 +62,14 @@ function gatherBuild() {
     processes.push(newProcess);
 }
 
+function removePerson(person) {
+    for (var i = 0; i < people.length; i++) {
+        if (people[i] == person) {
+            people.splice(i, 1);
+        }
+    }
+}
+
 function update(delta) {
     for (var i = 0; i < people.length; i++) {
         people[i].age += AGE_PER_SECOND * delta;
@@ -75,8 +83,8 @@ function update(delta) {
         } else {
             people[i].hunger += people[i].foodConsumption() * delta;
         }
+        activateEvent(delta, people[i]);
     }
-    activateEvents(delta);
 }
 
 /* The game loop code (a very hacky loop system that works on its own thread with a worker) */
@@ -89,21 +97,26 @@ gameloopThread.onmessage = function(data) {
     update((nowTime - lastTime) / 1000.0);
     lastTime = nowTime;
 
-    var peopleParagraph = "<h3>People:</h3><ul>";
-    for (var i = people.length - 1; i >= 0; i--) {
-        peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(0) +
-            "<br>&nbsp&nbspSex: " + people[i].sex +
-            (people[i].hunger == 0 ? "" : "<br>&nbsp&nbspHunger level: " + people[i].hunger.toFixed(2)) +
-            (!people[i].inRelationshipWith.exists ? "" : "<br>&nbsp&nbspIn a relationship with: " + people[i].inRelationshipWith.getName()) +
-            (people[i].work == "" ? "" : "<br>&nbsp&nbspCurrently working on: " + people[i].work) + "</li><br>";
+    var peopleParagraph = "<h3>People:</h3>";
+    if (people.length == 0) {
+        peopleParagraph += "<p>All of your people seem to have died. Refresh the page to restart!</p>";
+    } else {
+        peopleParagraph += "<ul>";
+        for (var i = people.length - 1; i >= 0; i--) {
+            peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(0) +
+                "<br>&nbsp&nbspSex: " + people[i].sex +
+                (people[i].hunger == 0 ? "" : "<br>&nbsp&nbspHunger level: " + people[i].hunger.toFixed(2)) +
+                (!people[i].inRelationshipWith.exists ? "" : "<br>&nbsp&nbspIn a relationship with: " + people[i].inRelationshipWith.getName()) +
+                (people[i].work == "" ? "" : "<br>&nbsp&nbspCurrently working on: " + people[i].work) + "</li><br>";
+        }
+        peopleParagraph += "</ul>";
     }
-    peopleParagraph += "</ul>";
 
     var resourceParagraph = "<h3>Resources:</h3><p><ul><li><b>Food</b>: " + resources.food.toFixed(1) + "</li><li><b>Build</b>: " + resources.build.toFixed(1) + "</li></ul></p>";
 
     var processesParagraph = "<h3>Current works:</h3><ul>";
     for (var i = 0; i < processes.length; i++) {
-        if (!processes[i].isDone()) {
+        if (!processes[i].isDone() && (processes[i].worker === null || (processes[i].worker !== null && processes[i].worker.exists))) {
             var progressBar = "";
             for (var j = 0; j < 10; j++) {
                 if (j / 10.0 < processes[i].progress()) {
@@ -113,9 +126,12 @@ gameloopThread.onmessage = function(data) {
                 }
             }
             processesParagraph += "<li>" + processes[i].getDescription() + ":<br>&nbsp&nbsp[" + progressBar + "]</li><br>";
-            if (processes[i].worker == null) {
+            if (processes[i].worker === null) {
                 processes[i].assignWorker(people);
             }
+        } else if (processes[i].worker !== null && !processes[i].worker.exists) {
+            historyEntries.push("The worker died. Work interrupted: <i>" + processes[i].name + "</i>");
+            processes.splice(i, 1);
         } else {
             historyEntries.push(processes[i].worker.getName() + " finished work: <i>" + processes[i].name + "</i>");
             processes.splice(i, 1);
