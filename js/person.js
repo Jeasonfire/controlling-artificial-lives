@@ -48,9 +48,13 @@ for (var i = 0; i < CONSONANTS.length; i++) {
 // TODO: Add more of these
 var SURNAME_SUFFIXES = ["ian", "en", "ell", "er", "ly"];
 
+var WORKING_AGE = 10 + Math.round(Math.random() * 16);
+var ELDER_AGE = 50 + Math.round(Math.random() * 30);
+
 function Person(father, mother) {
     this.age = 0;
     this.sex = Math.random() < 0.5 ? "male" : "female";
+    this.work = "";
     this.name = this.generateFirstName();
     this.surname = this.generateSurname(father, mother);
 }
@@ -58,6 +62,18 @@ function Person(father, mother) {
 Person.prototype = {
     getName: function() {
         return this.name + (this.surname != "" ? " " + this.surname : "");
+    },
+
+    eligibleForWork: function() {
+        return !this.isChild() && !this.isOld() && this.work == "";
+    },
+
+    isChild: function() {
+        return false;//this.age < WORKING_AGE;
+    },
+
+    isOld: function() {
+        return false;//this.age > ELDER_AGE;
     },
 
     generateFirstName: function() {

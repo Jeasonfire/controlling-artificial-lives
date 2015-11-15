@@ -2,12 +2,13 @@ body {
     font-family: monospace;
     color: #D0D0D0;
     background-color: #202020;
+    font-size: 1.5vw;
 }
 
 td {
     text-align: left;
     vertical-align: top;
-    min-width: 15vw;
+    min-width: 24vw;
 }
 
 ul {
