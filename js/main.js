@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var TIME_PASSED_PER_SECOND = 0.2;
+var TIME_PASSED_PER_SECOND = 0.5;
 var people = [];
 var resources = {
     food: 0,
@@ -25,8 +25,13 @@ var historyEntries = [];
 
 function makePerson() {
     var person = new Person();
+    if (people.length >= 2) {
+        var fathersIndex = Math.floor(Math.random() * people.length);
+        var mothersIndex = Math.floor(Math.random() * people.length);
+        person = new Person(people[fathersIndex], people[mothersIndex]);
+    }
     people.push(person);
-    historyEntries.push(person.name + " was just born!");
+    historyEntries.push(person.getName() + " was just born!");
 }
 
 function gatherFood() {
@@ -42,7 +47,7 @@ function update(delta) {
         var lastAge = people[i].age;
         people[i].age += delta * TIME_PASSED_PER_SECOND;
         if (Math.floor(lastAge / 10.0) != Math.floor(people[i].age / 10.0)) {
-            historyEntries.push(people[i].name + " just turned " + Math.round(people[i].age) + "!");
+            historyEntries.push(people[i].getName() + " just turned " + Math.round(people[i].age) + "!");
         }
     }
 }
@@ -58,15 +63,15 @@ gameloopThread.onmessage = function(data) {
     lastTime = nowTime;
 
     var peopleParagraph = "<ul>";
-    for (var i = 0; i < people.length; i++) {
-        peopleParagraph += "<li>" + people[i].name + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(1) + "</li>";
+    for (var i = people.length - 1; i >= 0; i--) {
+        peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(1) + "<br>&nbsp&nbspSex: " + people[i].sex + "</li><br>";
     }
     peopleParagraph += "</ul>";
 
     var resourceParagraph = "<p><ul><li>Food: " + resources.food + "</li><li>Build: " + resources.build + "</li></ul></p>";
 
     var historyParagraph = "<ul>";
-    for (var i = 0; i < historyEntries.length; i++) {
+    for (var i = historyEntries.length - 1; i >= 0; i--) {
         historyParagraph += "<li>" + historyEntries[i] + "</li>";
     }
     historyParagraph += "</ul>";
