@@ -22,14 +22,14 @@ function Process(name, time, degreeOfVariance, onFinish, automatic) {
     this.time = time + Math.random() * degreeOfVariance * 2 - degreeOfVariance;
     this.name = name;
     this.startingTime = -1;
-    this.worker = null;
+    this.worker = new Person(undefined, undefined, false);
     this.onFinish = onFinish;
     this.automatic = automatic !== undefined ? automatic : false;
 }
 
 Process.prototype = {
     getDescription: function () {
-        return this.name + " [" + (this.worker == null ? "NOBODY" : this.worker.getName()) + "]";
+        return this.name + " [" + (!this.worker.exists ? "NOBODY" : this.worker.getName()) + "]";
     },
 
     assignWorker: function(people) {
@@ -54,6 +54,9 @@ Process.prototype = {
             this.onFinish();
             return true;
         } else {
+            if (!this.worker.exists) {
+                this.startingTime = -1;
+            }
             return false;
         }
     },

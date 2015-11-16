@@ -17,6 +17,10 @@
 
 var YEARS_PER_SECOND = 0.1;
 var FOOD_STORAGE_BUFFER_MULTIPLIER = 1.5 + 1.5 * Math.random();
+var PROCESS_GATHERING_FOOD_NAME = "Gathering food";
+var PROCESS_BUILD_SUPPLIES_NAME = "Searching for building supplies";
+var PROCESS_BUILD_HOUSE_NAME = "Building a house";
+
 var yearsPassed = 0;
 var hideAutomaticProcesses = false;
 
@@ -56,13 +60,13 @@ function makePerson(father, mother) {
 }
 
 function gatherFood(automatic) {
-    var newProcess = new Process("Gathering food", (1.0 / YEARS_PER_SECOND) * 900, 200, function () {resources.food++;}, automatic);
+    var newProcess = new Process(PROCESS_GATHERING_FOOD_NAME, (1.0 / YEARS_PER_SECOND) * 900, 200, function () {resources.food++;}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
 
 function gatherBuild() {
-    var newProcess = new Process("Searching for building supplies", (1.0 / YEARS_PER_SECOND) * 1250, 200, function () {resources.build++;});
+    var newProcess = new Process(PROCESS_BUILD_SUPPLIES_NAME, (1.0 / YEARS_PER_SECOND) * 1250, 200, function () {resources.build++;});
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -72,7 +76,7 @@ function makeHouse() {
         return;
     }
     resources.build -= 5;
-    var newProcess = new Process("Making a house", (1.0 / YEARS_PER_SECOND) * 7500, 200, function () {houses.push(new House());});
+    var newProcess = new Process(PROCESS_BUILD_HOUSE_NAME, (1.0 / YEARS_PER_SECOND) * 7500, 200, function () {houses.push(new House());});
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -102,15 +106,32 @@ var yearlyStats = {
         for (var i = 0; i < people.length; i++) {
             total += people[i].foodConsumption();
         }
-        this.targetFood = total * FOOD_STORAGE_BUFFER_MULTIPLIER;
+        if (this.currentFood < total * FOOD_STORAGE_BUFFER_MULTIPLIER) {
+            total *= FOOD_STORAGE_BUFFER_MULTIPLIER;
+        }
+        this.targetFood = total;
     }
 };
 function yearlyUpdate() {
+    function amtOfWorkingPeople() {
+        var result = 0;
+        for (var i = 0; i < people.length; i++) {
+            if (people[i].eligibleForWork()) {
+                result++;
+            }
+        }
+        return result;
+    }
+
     yearlyStats.currentFood = resources.food;
     yearlyStats.updateTargetFood();
     var neededFood = 0;
     if (yearlyStats.targetFood > yearlyStats.currentFood) {
         neededFood = Math.ceil(yearlyStats.targetFood);
+        var amt = amtOfWorkingPeople() * 2;
+        if (neededFood > amt) {
+            neededFood = amt;
+        }
     }
     for (var i = 0; i < neededFood; i++) {
         gatherFood(true);
@@ -181,7 +202,7 @@ gameloopThread.onmessage = function(data) {
     var processesParagraph = "<h3>Current works:</h3><ul>";
     for (var i = 0; i < processes.length; i++) {
         var skipWriting = !(hideAutomaticProcesses && processes[i].automatic);
-        if (!processes[i].isDone() && (processes[i].worker === null || (processes[i].worker !== null && processes[i].worker.exists))) {
+        if (!processes[i].isDone() && (!processes[i].worker.exists || (processes[i].worker.exists && processes[i].worker.exists))) {
             var progressBar = "";
             for (var j = 0; j < 10; j++) {
                 if (j / 10.0 < processes[i].progress()) {
@@ -193,10 +214,10 @@ gameloopThread.onmessage = function(data) {
             if (skipWriting) {
                 processesParagraph += "<li>" + processes[i].getDescription() + ":<br>&nbsp&nbsp[" + progressBar + "]</li><br>";
             }
-            if (processes[i].worker === null) {
+            if (!processes[i].worker.exists) {
                 processes[i].assignWorker(people);
             }
-        } else if (processes[i].worker !== null && !processes[i].worker.exists) {
+        } else if (processes[i].worker.exists && !processes[i].worker.exists) {
             historyEntries.push("The worker died. Work interrupted: <i>" + processes[i].name + "</i>");
             processes.splice(i, 1);
         } else {
