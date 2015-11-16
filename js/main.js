@@ -98,6 +98,46 @@ function removePerson(person) {
     }
 }
 
+function amtOfYoungPeople() {
+    var result = 0;
+    for (var i = 0; i < people.length; i++) {
+        if (people[i].isChild()) {
+            result++;
+        }
+    }
+    return result;
+}
+
+function amtOfWorkingPeople() {
+    var result = 0;
+    for (var i = 0; i < people.length; i++) {
+        if (!people[i].isChild() && !people[i].isOld()) {
+            result++;
+        }
+    }
+    return result;
+}
+
+function amtOfElderPeople() {
+    var result = 0;
+    for (var i = 0; i < people.length; i++) {
+        if (people[i].isOld()) {
+            result++;
+        }
+    }
+    return result;
+}
+
+function amtOfProcesses(type) {
+    var result = 0;
+    for (var i = 0; i < processes.length; i++) {
+        if (processes[i].name == type) {
+            result++;
+        }
+    }
+    return result;
+}
+
 var yearlyStats = {
     currentFood: resources.food,
     targetFood: 0,
@@ -113,16 +153,6 @@ var yearlyStats = {
     }
 };
 function yearlyUpdate() {
-    function amtOfWorkingPeople() {
-        var result = 0;
-        for (var i = 0; i < people.length; i++) {
-            if (people[i].eligibleForWork()) {
-                result++;
-            }
-        }
-        return result;
-    }
-
     yearlyStats.currentFood = resources.food;
     yearlyStats.updateTargetFood();
     var neededFood = 0;
@@ -131,6 +161,9 @@ function yearlyUpdate() {
         var amt = amtOfWorkingPeople() * 2;
         if (neededFood > amt) {
             neededFood = amt;
+        }
+        if (neededFood < amtOfProcesses(PROCESS_GATHERING_FOOD_NAME)) {
+            neededFood = 0;
         }
     }
     for (var i = 0; i < neededFood; i++) {
@@ -197,6 +230,13 @@ gameloopThread.onmessage = function(data) {
     for (var i = 0; i < houses.length; i++) {
         resourceParagraph += "<li>" + houses[i].getDescription() + "</li>"
     }
+    resourceParagraph += "</ul>";
+    resourceParagraph += "<h3>Misc. stats:</h3><ul>";
+    resourceParagraph += "<li>Population: " + people.length + "<ul>";
+    resourceParagraph += "<li>Child pop.: " + amtOfYoungPeople() + "</li>";
+    resourceParagraph += "<li>Working pop.: " + amtOfWorkingPeople() + "</li>";
+    resourceParagraph += "<li>Elder pop.: " + amtOfElderPeople() + "</li>";
+    resourceParagraph += "</ul></li><li>Year: " + Math.floor(yearsPassed) + "</li>";
     resourceParagraph += "</ul>";
 
     var processesParagraph = "<h3>Current works:</h3><ul>";

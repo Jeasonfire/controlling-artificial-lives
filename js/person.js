@@ -48,8 +48,8 @@ for (var i = 0; i < CONSONANTS.length; i++) {
 // TODO: Add more of these
 var SURNAME_SUFFIXES = ["ian", "en", "ell", "er", "ly"];
 
-var WORKING_AGE = 10 + Math.round(Math.random() * 16);
-var ELDER_AGE = 50 + Math.round(Math.random() * 30);
+var WORKING_AGE = 14 + Math.round(Math.random() * 6);
+var ELDER_AGE = 55 + Math.round(Math.random() * 30);
 
 var MAX_FOOD_CONSUMPTION = 0.4 + 0.2 * Math.random() * Math.random();
 var MAX_HUNGER_LEVEL = MAX_FOOD_CONSUMPTION + 0.5 * Math.random();
