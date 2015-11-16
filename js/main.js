@@ -15,7 +15,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var AGE_PER_SECOND = 0.5;
+var YEARS_PER_SECOND = 0.1;
+var yearsPassed = 0;
+
 /* Add some definitely male and female people so the people will survive at
  * least a while. Also a few randoms just for a bit of the random feel.
  * Also make sure at least 2 of them are probable to make offspring.
@@ -52,13 +54,13 @@ function makePerson(father, mother) {
 }
 
 function gatherFood() {
-    var newProcess = new Process("Gathering food", 4000, 200, function () {resources.food++;});
+    var newProcess = new Process("Gathering food", (1.0 / YEARS_PER_SECOND) * 1000, 200, function () {resources.food++;});
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
 
 function gatherBuild() {
-    var newProcess = new Process("Searching for building supplies", 10000, 200, function () {resources.build++;});
+    var newProcess = new Process("Searching for building supplies", (1.0 / YEARS_PER_SECOND) * 1 * 1000, 200, function () {resources.build++;});
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -68,7 +70,7 @@ function makeHouse() {
         return;
     }
     resources.build -= 5;
-    var newProcess = new Process("Making a house", 40000, 200, function () {houses.push(new House());});
+    var newProcess = new Process("Making a house", (1.0 / YEARS_PER_SECOND) * 5 * 1000, 200, function () {houses.push(new House());});
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -82,17 +84,21 @@ function removePerson(person) {
 }
 
 function update(delta) {
+    var lastYear = yearsPassed;
+    yearsPassed += YEARS_PER_SECOND * delta;
+    if (lastYear.toFixed(0))
+
     for (var i = 0; i < people.length; i++) {
-        people[i].age += AGE_PER_SECOND * delta;
+        people[i].age += YEARS_PER_SECOND * delta;
         if (resources.food >= people[i].foodConsumption() * delta) {
-            resources.food -= people[i].foodConsumption() * delta;
+            resources.food -= people[i].foodConsumption() * YEARS_PER_SECOND * delta;
             if (resources.food > 0 && people[i].hunger > 0) {
                 var amt = Math.min(resources.food, people[i].hunger);
                 people[i].hunger -= amt;
                 resources.food -= amt;
             }
         } else {
-            people[i].hunger += people[i].foodConsumption() * delta;
+            people[i].hunger += people[i].foodConsumption() * YEARS_PER_SECOND * delta;
         }
         for (var j = 0; j < houses.length; j++) {
             houses[j].assignHouseFor(people[i]);
@@ -155,7 +161,6 @@ gameloopThread.onmessage = function(data) {
             historyEntries.push("The worker died. Work interrupted: <i>" + processes[i].name + "</i>");
             processes.splice(i, 1);
         } else {
-            historyEntries.push(processes[i].worker.getName() + " finished work: <i>" + processes[i].name + "</i>");
             processes.splice(i, 1);
         }
     }

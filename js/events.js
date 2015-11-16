@@ -78,7 +78,7 @@ chances.push([function(person) {
     var hungerDeath = Math.pow(person.hunger / MAX_HUNGER_LEVEL, 4);
     return ageDeath + hungerDeath - (ageDeath * hungerDeath);
 }, function(person) {
-    historyEntries.push(person.getName() + " died!");
+    historyEntries.push(person.getName() + " died.");
     person.exists = false;
     removePerson(person);
 }]);
