@@ -98,6 +98,13 @@ Person.prototype = {
         if (otherPerson.house != -1) {
             this.house = otherPerson.house;
         }
+        if (otherPerson.surname != "") {
+            this.surname = otherPerson.surname;
+        } else {
+            var father = this.sex == "male";
+            this.surname = this.generateSurname(father ? this : otherPerson,
+                father ? otherPerson : this);
+        }
         this.inRelationshipWith = otherPerson;
     },
 

@@ -22,7 +22,7 @@ var PROCESS_BUILD_SUPPLIES_NAME = "Searching for building supplies";
 var PROCESS_BUILD_HOUSE_NAME = "Building a house";
 
 var yearsPassed = 0;
-var hideAutomaticProcesses = false;
+var hideAutomaticProcesses = true;
 
 /* Add some definitely male and female people so the people will survive at
  * least a while. Also a few randoms just for a bit of the random feel.
@@ -65,18 +65,18 @@ function gatherFood(automatic) {
     processes.push(newProcess);
 }
 
-function gatherBuild() {
-    var newProcess = new Process(PROCESS_BUILD_SUPPLIES_NAME, (1.0 / YEARS_PER_SECOND) * 1250, 200, function () {resources.build++;});
+function gatherBuild(automatic) {
+    var newProcess = new Process(PROCESS_BUILD_SUPPLIES_NAME, (1.0 / YEARS_PER_SECOND) * 1250, 200, function () {resources.build++;}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
 
-function makeHouse() {
+function makeHouse(automatic) {
     if (resources.build < 5) {
         return;
     }
     resources.build -= 5;
-    var newProcess = new Process(PROCESS_BUILD_HOUSE_NAME, (1.0 / YEARS_PER_SECOND) * 7500, 200, function () {houses.push(new House());});
+    var newProcess = new Process(PROCESS_BUILD_HOUSE_NAME, (1.0 / YEARS_PER_SECOND) * 7500, 200, function () {houses.push(new House());}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -128,6 +128,15 @@ function amtOfElderPeople() {
     return result;
 }
 
+function isThereHomelessPeople() {
+    for (var i = 0; i < people.length; i++) {
+        if (people[i].house == -1 && !people[i].isChild()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function amtOfProcesses(type) {
     var result = 0;
     for (var i = 0; i < processes.length; i++) {
@@ -168,6 +177,17 @@ function yearlyUpdate() {
     }
     for (var i = 0; i < neededFood; i++) {
         gatherFood(true);
+    }
+
+    if (isThereHomelessPeople()) {
+        if (resources.build < 5) {
+            for (var i = 0; i < Math.ceil(Math.max(0, people.length / 3)) &&
+                    resources.build + amtOfProcesses(PROCESS_BUILD_SUPPLIES_NAME) < 5; i++) {
+                gatherBuild(true);
+            }
+        } else {
+            makeHouse(true);
+        }
     }
 }
 

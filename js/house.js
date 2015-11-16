@@ -37,7 +37,7 @@ House.prototype = {
     },
 
     assignHouseFor: function(person) {
-        if (person.house == -1 && this.hasRoom()) {
+        if (!person.isChild() && person.house == -1 && this.hasRoom()) {
             if (person.inRelationshipWith.exists && person.inRelationshipWith.house != -1) {
                 return false;
             }

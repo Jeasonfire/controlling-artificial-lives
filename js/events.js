@@ -59,6 +59,9 @@ chances.push([function(person) {
         person.age > ELDER_AGE || person.age > ELDER_AGE) {
         return 0;
     }
+    if (person.house == -1) {
+        return 0;
+    }
     return 0.02;
 }, function(person) {
     var father, mother;
@@ -115,8 +118,13 @@ chances.push([function(person) {
                     (person.sex != person1.sex &&
                     (person.sexuality == "any" || person.sexuality == "opposite") &&
                     (person1.sexuality == "any" || person1.sexuality == "opposite"))) {
-                person.getInRelationShipWith(person1);
-                person1.getInRelationShipWith(person);
+                if (Math.random() < 0.5) {
+                    person.getInRelationShipWith(person1);
+                    person1.getInRelationShipWith(person);
+                } else {
+                    person1.getInRelationShipWith(person);
+                    person.getInRelationShipWith(person1);
+                }
                 historyEntries.push(person.getName() + " and " + person1.getName() + " are now in a relationship!");
                 return;
             }
