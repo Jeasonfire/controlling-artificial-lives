@@ -17,10 +17,12 @@
 
 var YEARS_PER_SECOND = 0.1;
 var FOOD_STORAGE_BUFFER_MULTIPLIER = 1.5 + 1.5 * Math.random();
+var TIME_BETWEEN_MAGICAL_BIRTHS = 30;
 var PROCESS_GATHERING_FOOD_NAME = "Gathering food";
 var PROCESS_BUILD_SUPPLIES_NAME = "Searching for building supplies";
 var PROCESS_BUILD_HOUSE_NAME = "Building a house";
 
+var timeSinceLastMagicalBirth = TIME_BETWEEN_MAGICAL_BIRTHS;
 var yearsPassed = 0;
 var hideAutomaticProcesses = true;
 
@@ -57,6 +59,17 @@ function makePerson(father, mother) {
     var person = new Person(father, mother);
     people.push(person);
     historyEntries.push(person.getName() + " was just born!");
+}
+
+function canMagicalBirth() {
+    return timeSinceLastMagicalBirth > TIME_BETWEEN_MAGICAL_BIRTHS;
+}
+
+function makePersonMagically() {
+    if (canMagicalBirth()) {
+        makePerson();
+        timeSinceLastMagicalBirth = 0;
+    }
 }
 
 function gatherFood(automatic) {
@@ -198,6 +211,8 @@ function update(delta) {
         yearlyUpdate();
     }
 
+    timeSinceLastMagicalBirth += delta;
+
     for (var i = 0; i < people.length; i++) {
         people[i].age += YEARS_PER_SECOND * delta;
         if (resources.food >= people[i].foodConsumption() * delta) {
@@ -227,6 +242,9 @@ gameloopThread.onmessage = function(data) {
     var nowTime = Date.now();
     update((nowTime - lastTime) / 1000.0);
     lastTime = nowTime;
+
+    document.getElementById("makePerson").value = "Make a person" +
+        (canMagicalBirth() ? "" : " [" + (TIME_BETWEEN_MAGICAL_BIRTHS - timeSinceLastMagicalBirth).toFixed(1) + "s until next]");
 
     var peopleParagraph = "<h3>People:</h3>";
     if (people.length == 0) {
