@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-function Process(name, time, degreeOfVariance, onFinish) {
+function Process(name, time, degreeOfVariance, onFinish, automatic) {
     if (degreeOfVariance === undefined) {
         degreeOfVariance = 0;
     }
@@ -24,11 +24,12 @@ function Process(name, time, degreeOfVariance, onFinish) {
     this.startingTime = -1;
     this.worker = null;
     this.onFinish = onFinish;
+    this.automatic = automatic !== undefined ? automatic : false;
 }
 
 Process.prototype = {
     getDescription: function () {
-        return this.name + " [" + (this.worker == null ? "IDLE" : this.worker.name) + "]";
+        return this.name + " [" + (this.worker == null ? "NOBODY" : this.worker.getName()) + "]";
     },
 
     assignWorker: function(people) {

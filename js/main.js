@@ -16,7 +16,9 @@
  */
 
 var YEARS_PER_SECOND = 0.1;
+var FOOD_STORAGE_BUFFER_MULTIPLIER = 1.5 + 1.5 * Math.random();
 var yearsPassed = 0;
+var hideAutomaticProcesses = false;
 
 /* Add some definitely male and female people so the people will survive at
  * least a while. Also a few randoms just for a bit of the random feel.
@@ -53,14 +55,14 @@ function makePerson(father, mother) {
     historyEntries.push(person.getName() + " was just born!");
 }
 
-function gatherFood() {
-    var newProcess = new Process("Gathering food", (1.0 / YEARS_PER_SECOND) * 1000, 200, function () {resources.food++;});
+function gatherFood(automatic) {
+    var newProcess = new Process("Gathering food", (1.0 / YEARS_PER_SECOND) * 900, 200, function () {resources.food++;}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
 
 function gatherBuild() {
-    var newProcess = new Process("Searching for building supplies", (1.0 / YEARS_PER_SECOND) * 1 * 1000, 200, function () {resources.build++;});
+    var newProcess = new Process("Searching for building supplies", (1.0 / YEARS_PER_SECOND) * 1250, 200, function () {resources.build++;});
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -70,9 +72,18 @@ function makeHouse() {
         return;
     }
     resources.build -= 5;
-    var newProcess = new Process("Making a house", (1.0 / YEARS_PER_SECOND) * 5 * 1000, 200, function () {houses.push(new House());});
+    var newProcess = new Process("Making a house", (1.0 / YEARS_PER_SECOND) * 7500, 200, function () {houses.push(new House());});
     newProcess.assignWorker(people);
     processes.push(newProcess);
+}
+
+function toggleAutomaticWorks() {
+    hideAutomaticProcesses = !hideAutomaticProcesses;
+    if (hideAutomaticProcesses) {
+        document.getElementById("hideAutoProcs").value = "Show automatic works";
+    } else {
+        document.getElementById("hideAutoProcs").value = "Hide automatic works";
+    }
 }
 
 function removePerson(person) {
@@ -83,10 +94,35 @@ function removePerson(person) {
     }
 }
 
+var yearlyStats = {
+    currentFood: resources.food,
+    targetFood: 0,
+    updateTargetFood: function() {
+        var total = 0;
+        for (var i = 0; i < people.length; i++) {
+            total += people[i].foodConsumption();
+        }
+        this.targetFood = total * FOOD_STORAGE_BUFFER_MULTIPLIER;
+    }
+};
+function yearlyUpdate() {
+    yearlyStats.currentFood = resources.food;
+    yearlyStats.updateTargetFood();
+    var neededFood = 0;
+    if (yearlyStats.targetFood > yearlyStats.currentFood) {
+        neededFood = Math.ceil(yearlyStats.targetFood);
+    }
+    for (var i = 0; i < neededFood; i++) {
+        gatherFood(true);
+    }
+}
+
 function update(delta) {
     var lastYear = yearsPassed;
     yearsPassed += YEARS_PER_SECOND * delta;
-    if (lastYear.toFixed(0))
+    if (Math.floor(lastYear) != Math.floor(yearsPassed)) {
+        yearlyUpdate();
+    }
 
     for (var i = 0; i < people.length; i++) {
         people[i].age += YEARS_PER_SECOND * delta;
@@ -124,7 +160,7 @@ gameloopThread.onmessage = function(data) {
     } else {
         peopleParagraph += "<ul>";
         for (var i = people.length - 1; i >= 0; i--) {
-            peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + people[i].age.toFixed(0) +
+            peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + Math.floor(people[i].age) +
                 "<br>&nbsp&nbspSex: " + people[i].sex +
                 (!people[i].father.exists ? "" : "<br>&nbsp&nbspFather: " + people[i].father.getName()) +
                 (!people[i].mother.exists ? "" : "<br>&nbsp&nbspMother: " + people[i].mother.getName()) +
@@ -144,6 +180,7 @@ gameloopThread.onmessage = function(data) {
 
     var processesParagraph = "<h3>Current works:</h3><ul>";
     for (var i = 0; i < processes.length; i++) {
+        var skipWriting = !(hideAutomaticProcesses && processes[i].automatic);
         if (!processes[i].isDone() && (processes[i].worker === null || (processes[i].worker !== null && processes[i].worker.exists))) {
             var progressBar = "";
             for (var j = 0; j < 10; j++) {
@@ -153,7 +190,9 @@ gameloopThread.onmessage = function(data) {
                     progressBar += "&nbsp";
                 }
             }
-            processesParagraph += "<li>" + processes[i].getDescription() + ":<br>&nbsp&nbsp[" + progressBar + "]</li><br>";
+            if (skipWriting) {
+                processesParagraph += "<li>" + processes[i].getDescription() + ":<br>&nbsp&nbsp[" + progressBar + "]</li><br>";
+            }
             if (processes[i].worker === null) {
                 processes[i].assignWorker(people);
             }

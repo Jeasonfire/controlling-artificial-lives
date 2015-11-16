@@ -51,8 +51,8 @@ var SURNAME_SUFFIXES = ["ian", "en", "ell", "er", "ly"];
 var WORKING_AGE = 10 + Math.round(Math.random() * 16);
 var ELDER_AGE = 50 + Math.round(Math.random() * 30);
 
-var MAX_FOOD_CONSUMPTION = 0.05 + 0.15 * Math.random() * Math.random();
-var MAX_HUNGER_LEVEL = MAX_FOOD_CONSUMPTION * 10 + 2 * Math.random();
+var MAX_FOOD_CONSUMPTION = 0.4 + 0.2 * Math.random() * Math.random();
+var MAX_HUNGER_LEVEL = MAX_FOOD_CONSUMPTION + 0.5 * Math.random();
 
 function Person(father, mother, exists, sex, sexuality, age) {
     if (exists === undefined) {
