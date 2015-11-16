@@ -97,9 +97,8 @@ chances.push([function(person) {
      *  * The first people that come to life "don't have parents".
      */
     function isNotRelative(person0, person1) {
-        return person0 != person1 && (Math.random() < 0.01 || (person0.father != person1 && person0.mother != person1 &&
-            ((person0.father.exists && person1.father.exists && person0.father != person1.father && person0.mother != person1.mother) ||
-            (!person0.father.exists || !person1.father.exists))));
+        // TODO: REMAKE THIS HORRIBLE LINE DEAR LORD
+        return (Math.random() < Math.pow(person0.confidence, 16) && person0 == person1) || (person0 != person1 && (Math.random() < 0.01 || (person0.father != person1 && person0.mother != person1 && ((person0.father.exists && person1.father.exists && person0.father!= person1.father && person0.mother != person1.mother) || (!person0.father.exists || !person1.father.exists)))));
     }
 
     if (person.inRelationshipWith.exists) {

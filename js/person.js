@@ -64,6 +64,7 @@ function Person(father, mother, exists, sex, sexuality, age) {
         }
     }
     this.age = age !== undefined ? age : 0;
+    this.confidence = Math.random();
     this.hunger = 0;
     this.house = -1;
     this.sex = sex !== undefined ? sex : Math.random() < 0.5 ? "male" : "female";
@@ -105,7 +106,7 @@ Person.prototype = {
     },
 
     foodConsumption: function() {
-        return MAX_FOOD_CONSUMPTION * (1.0 - Math.abs(Math.min(this.age, 60.0) - 30.0) / 31.0);
+        return MAX_FOOD_CONSUMPTION * (1.0 - Math.abs(Math.min(this.age, ELDER_AGE) - ELDER_AGE / 2.0) / (ELDER_AGE + 1.0));
     },
 
     isChild: function() {
@@ -162,12 +163,12 @@ Person.prototype = {
         if ((fathersName && father.surname == "") || (!fathersName && mother.surname == "") || Math.random < 0.05) {
             var suffix = SURNAME_SUFFIXES[Math.floor(Math.random() * SURNAME_SUFFIXES.length)];
             if (fathersName) {
-                if (father.name.charAt[father.name.length] == suffix.charAt[0]) {
+                if (father.name[father.name.length - 1] == suffix[0]) {
                     suffix = suffix.substring(1);
                 }
                 return father.name + suffix;
             } else {
-                if (mother.name.charAt[mother.name.length] == suffix.charAt[0]) {
+                if (mother.name[mother.name.length - 1] == suffix[0]) {
                     suffix = suffix.substring(1);
                 }
                 return mother.name + suffix;
