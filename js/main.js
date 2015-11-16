@@ -105,7 +105,7 @@ function update(delta) {
 /* The game loop code (a very hacky loop system that works on its own thread with a worker) */
 var UPS = 20; // Game loops per second
 var lastTime = Date.now();
-var gameloopThread = new Worker("/js/loopWorker.js");
+var gameloopThread = new Worker("js/loopWorker.js");
 gameloopThread.postMessage([UPS]);
 gameloopThread.onmessage = function(data) {
     var nowTime = Date.now();
