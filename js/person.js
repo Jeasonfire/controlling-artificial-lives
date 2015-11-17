@@ -98,7 +98,7 @@ Person.prototype = {
         if (otherPerson.house != -1) {
             this.house = otherPerson.house;
         }
-        if (this.surname != "" && otherPerson.surname != "") {
+        if (otherPerson.surname != "") {
             this.surname = otherPerson.surname;
         } else {
             var father = this.sex == "male";

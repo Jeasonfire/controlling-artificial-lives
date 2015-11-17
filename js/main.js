@@ -21,6 +21,7 @@ var TIME_BETWEEN_MAGICAL_BIRTHS = 30;
 var PROCESS_GATHERING_FOOD_NAME = "Gathering food";
 var PROCESS_BUILD_SUPPLIES_NAME = "Searching for building supplies";
 var PROCESS_BUILD_HOUSE_NAME = "Building a house";
+var PROCESS_BUILD_FARM_NAME = "Raising a barn";
 
 var timeSinceLastMagicalBirth = TIME_BETWEEN_MAGICAL_BIRTHS;
 var yearsPassed = 0;
@@ -34,10 +35,7 @@ var people = [
     new Person(undefined, undefined, undefined, "male", "opposite", WORKING_AGE + Math.random() * 5),
     new Person(undefined, undefined, undefined, "female", "opposite", WORKING_AGE + Math.random() * 5),
     new Person(undefined, undefined, undefined, "male", undefined, WORKING_AGE + Math.random() * 5),
-    new Person(undefined, undefined, undefined, "female", undefined, WORKING_AGE + Math.random() * 5),
-    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 15),
-    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 15),
-    new Person(undefined, undefined, undefined, undefined, undefined, 10 + Math.random() * 15)
+    new Person(undefined, undefined, undefined, "female", undefined, WORKING_AGE + Math.random() * 5)
 ];
 // Shuffle the list to obfuscate pre-made rolls
 people.sort(function() {return 9.5 - Math.random()});
@@ -52,6 +50,8 @@ var houses = [
     new House(),
     new House()
 ];
+var farms = 4;
+var currentFarmsToBeGatheredFrom = 0;
 var historyEntries = [];
 var processes = [];
 
@@ -68,11 +68,17 @@ function canMagicalBirth() {
 function makePersonMagically() {
     if (canMagicalBirth()) {
         makePerson();
-        timeSinceLastMagicalBirth = 0;
+        if (people.length > 5) {
+            timeSinceLastMagicalBirth = 0;
+        }
     }
 }
 
 function gatherFood(automatic) {
+    if (currentFarmsToBeGatheredFrom <= 0) {
+        return;
+    }
+    currentFarmsToBeGatheredFrom--;
     var newProcess = new Process(PROCESS_GATHERING_FOOD_NAME, (1.0 / YEARS_PER_SECOND) * 900, 200, function () {resources.food++;}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
@@ -90,6 +96,16 @@ function makeHouse(automatic) {
     }
     resources.build -= 5;
     var newProcess = new Process(PROCESS_BUILD_HOUSE_NAME, (1.0 / YEARS_PER_SECOND) * 7500, 200, function () {houses.push(new House());}, automatic);
+    newProcess.assignWorker(people);
+    processes.push(newProcess);
+}
+
+function makeFarm(automatic) {
+    if (resources.build < 2) {
+        return;
+    }
+    resources.build -= 2;
+    var newProcess = new Process(PROCESS_BUILD_FARM_NAME, (1.0 / YEARS_PER_SECOND) * 1000, 200, function () {farms++}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -141,13 +157,15 @@ function amtOfElderPeople() {
     return result;
 }
 
-function isThereHomelessPeople() {
+function amtOfPopulatedHouses() {
+    var houseIDs = [];
     for (var i = 0; i < people.length; i++) {
-        if (people[i].house == -1 && !people[i].isChild()) {
-            return true;
+        if (people[i].house != -1 && houseIDs.indexOf(people[i].house) == -1 &&
+                !people[i].isChild()) {
+            houseIDs.push(people[i].house);
         }
     }
-    return false;
+    return houseIDs.length;
 }
 
 function amtOfProcesses(type) {
@@ -175,6 +193,8 @@ var yearlyStats = {
     }
 };
 function yearlyUpdate() {
+    currentFarmsToBeGatheredFrom = farms;
+
     yearlyStats.currentFood = resources.food;
     yearlyStats.updateTargetFood();
     var neededFood = 0;
@@ -188,11 +208,16 @@ function yearlyUpdate() {
             neededFood = 0;
         }
     }
+    for (var i = 0; i < Math.max(0, neededFood - currentFarmsToBeGatheredFrom); i++) {
+        console.log("i: " + i + ", neededFood - currentFarmsToBeGatheredFrom: " + (neededFood - currentFarmsToBeGatheredFrom));
+        makeFarm(true);
+    }
     for (var i = 0; i < neededFood; i++) {
         gatherFood(true);
     }
 
-    if (isThereHomelessPeople()) {
+    if (neededFood < yearlyStats.currentFood && // Make sure they don't die of hunger while making houses
+            amtOfPopulatedHouses() < amtOfWorkingPeople() + amtOfElderPeople()) {
         if (resources.build < 5) {
             for (var i = 0; i < Math.ceil(Math.max(0, people.length / 3)) &&
                     resources.build + amtOfProcesses(PROCESS_BUILD_SUPPLIES_NAME) < 5; i++) {
@@ -275,6 +300,13 @@ gameloopThread.onmessage = function(data) {
     resourceParagraph += "<li>Working pop.: " + amtOfWorkingPeople() + "</li>";
     resourceParagraph += "<li>Elder pop.: " + amtOfElderPeople() + "</li>";
     resourceParagraph += "</ul></li><li>Year: " + Math.floor(yearsPassed) + "</li>";
+    resourceParagraph += "<li>Farms: " + farms + "<ul>"
+    resourceParagraph += "<li>Unattended farms: " + currentFarmsToBeGatheredFrom + "</li>"
+    resourceParagraph += "</ul></li>"
+    resourceParagraph += "<li>Houses: " + houses.length + "<ul>"
+    resourceParagraph += "<li>Unoccupied houses: " + (houses.length - amtOfPopulatedHouses()) + "</li>"
+    resourceParagraph += "</ul></li>"
+    resourceParagraph += "<li></li>"
     resourceParagraph += "</ul>";
 
     var processesParagraph = "<h3>Current works:</h3><ul>";
