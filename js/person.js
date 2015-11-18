@@ -54,6 +54,8 @@ var ELDER_AGE = 55 + Math.round(Math.random() * 30);
 var MAX_FOOD_CONSUMPTION = 0.4 + 0.2 * Math.random() * Math.random();
 var MAX_HUNGER_LEVEL = MAX_FOOD_CONSUMPTION + 0.5 * Math.random();
 
+var personIDs = 0;
+
 function Person(father, mother, exists, sex, sexuality, age) {
     if (exists === undefined) {
         this.exists = true;
@@ -71,12 +73,13 @@ function Person(father, mother, exists, sex, sexuality, age) {
     this.work = "";
     this.workEfficiency = 0.25 + Math.random() * 0.5;
     this.divorce();
-    this.sexuality = sexuality !== undefined ? sexuality : Math.random() < 0.85
+    this.sexuality = sexuality !== undefined ? sexuality : Math.random() < 0.75
         ? "opposite" : Math.random() < 0.5 ? "any" : Math.random() < 0.85 ? "same" : "none";
     this.name = this.generateFirstName();
     this.surname = this.generateSurname(father, mother);
     this.father = father !== undefined ? father : new Person("", "", false, "male");
     this.mother = mother !== undefined ? mother : new Person("", "", false, "female");
+    this.personID = ++personIDs;
 }
 
 Person.prototype = {
@@ -98,9 +101,9 @@ Person.prototype = {
         if (otherPerson.house != -1) {
             this.house = otherPerson.house;
         }
-        if (otherPerson.surname != "") {
+        if (otherPerson.surname != "" && this.confidence < otherPerson.confidence) {
             this.surname = otherPerson.surname;
-        } else {
+        } else if (this.surname == "") {
             var father = this.sex == "male";
             this.surname = this.generateSurname(father ? this : otherPerson,
                 father ? otherPerson : this);

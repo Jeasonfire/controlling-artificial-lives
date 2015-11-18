@@ -15,7 +15,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var YEARS_PER_SECOND = 0.1;
 var FOOD_STORAGE_BUFFER_MULTIPLIER = 1.5 + 1.5 * Math.random();
 var TIME_BETWEEN_MAGICAL_BIRTHS = 30;
 var PROCESS_GATHERING_FOOD_NAME = "Gathering food";
@@ -26,6 +25,7 @@ var PROCESS_BUILD_FARM_NAME = "Raising a barn";
 var timeSinceLastMagicalBirth = TIME_BETWEEN_MAGICAL_BIRTHS;
 var yearsPassed = 0;
 var hideAutomaticProcesses = true;
+var focusPerson = -1;
 
 /* Add some definitely male and female people so the people will survive at
  * least a while. Also a few randoms just for a bit of the random feel.
@@ -113,10 +113,14 @@ function makeFarm(automatic) {
 function toggleAutomaticWorks() {
     hideAutomaticProcesses = !hideAutomaticProcesses;
     if (hideAutomaticProcesses) {
-        document.getElementById("hideAutoProcs").value = "Show automatic works";
+        $("#hideAutoProcs").val("Show automatic works");
     } else {
-        document.getElementById("hideAutoProcs").value = "Hide automatic works";
+        $("#hideAutoProcs").val("Hide automatic works");
     }
+}
+
+function focusPerson(personID) {
+    focusPerson = personID;
 }
 
 function removePerson(person) {
@@ -180,8 +184,7 @@ function amtOfProcesses(type) {
 
 var yearlyStats = {
     currentFood: resources.food,
-    targetFood: 0,
-    updateTargetFood: function() {
+    targetFood: function() {
         var total = 0;
         for (var i = 0; i < people.length; i++) {
             total += people[i].foodConsumption();
@@ -189,34 +192,29 @@ var yearlyStats = {
         if (this.currentFood < total * FOOD_STORAGE_BUFFER_MULTIPLIER) {
             total *= FOOD_STORAGE_BUFFER_MULTIPLIER;
         }
-        this.targetFood = total;
+        return Math.ceil(total);
     }
 };
 function yearlyUpdate() {
     currentFarmsToBeGatheredFrom = farms;
 
     yearlyStats.currentFood = resources.food;
-    yearlyStats.updateTargetFood();
-    var neededFood = 0;
-    if (yearlyStats.targetFood > yearlyStats.currentFood) {
-        neededFood = Math.ceil(yearlyStats.targetFood);
-        var amt = amtOfWorkingPeople() * 2;
-        if (neededFood > amt) {
-            neededFood = amt;
-        }
-        if (neededFood < amtOfProcesses(PROCESS_GATHERING_FOOD_NAME)) {
-            neededFood = 0;
-        }
+    var neededFood = yearlyStats.targetFood();
+    var amt = amtOfWorkingPeople() * 2;
+    if (neededFood > amt) {
+        neededFood = amt;
+    }
+    if (neededFood < amtOfProcesses(PROCESS_GATHERING_FOOD_NAME)) {
+        neededFood = 0;
     }
     for (var i = 0; i < Math.max(0, neededFood - currentFarmsToBeGatheredFrom); i++) {
-        console.log("i: " + i + ", neededFood - currentFarmsToBeGatheredFrom: " + (neededFood - currentFarmsToBeGatheredFrom));
         makeFarm(true);
     }
     for (var i = 0; i < neededFood; i++) {
         gatherFood(true);
     }
 
-    if (neededFood < yearlyStats.currentFood && // Make sure they don't die of hunger while making houses
+    if (yearlyStats.targetFood < yearlyStats.currentFood && // Make sure they don't die of hunger while making houses
             amtOfPopulatedHouses() < amtOfWorkingPeople() + amtOfElderPeople()) {
         if (resources.build < 5) {
             for (var i = 0; i < Math.ceil(Math.max(0, people.length / 3)) &&
@@ -226,6 +224,12 @@ function yearlyUpdate() {
         } else {
             makeHouse(true);
         }
+    }
+}
+
+function updateFocus(person) {
+    if ($("#person" + person.personID).length > 0 && $("#person" + person.personID).is(":hover")) {
+        focusPerson = person.personID;
     }
 }
 
@@ -239,6 +243,7 @@ function update(delta) {
     timeSinceLastMagicalBirth += delta;
 
     for (var i = 0; i < people.length; i++) {
+        updateFocus(people[i]);
         people[i].age += YEARS_PER_SECOND * delta;
         if (resources.food >= people[i].foodConsumption() * delta) {
             resources.food -= people[i].foodConsumption() * YEARS_PER_SECOND * delta;
@@ -259,7 +264,8 @@ function update(delta) {
 }
 
 /* The game loop code (a very hacky loop system that works on its own thread with a worker) */
-var UPS = 20; // Game loops per second
+var UPS = 30; // Game loops per second
+var YEARS_PER_SECOND = 0.1;
 var lastTime = Date.now();
 var gameloopThread = new Worker("js/loopWorker.js");
 gameloopThread.postMessage([UPS]);
@@ -268,8 +274,8 @@ gameloopThread.onmessage = function(data) {
     update((nowTime - lastTime) / 1000.0);
     lastTime = nowTime;
 
-    document.getElementById("makePerson").value = "Make a person" +
-        (canMagicalBirth() ? "" : " [" + (TIME_BETWEEN_MAGICAL_BIRTHS - timeSinceLastMagicalBirth).toFixed(1) + "s until next]");
+    $("#makePerson").val("Make a person" +
+        (canMagicalBirth() ? "" : " [" + (TIME_BETWEEN_MAGICAL_BIRTHS - timeSinceLastMagicalBirth).toFixed(1) + "s until next]"));
 
     var peopleParagraph = "<h3>People:</h3>";
     if (people.length == 0) {
@@ -277,13 +283,17 @@ gameloopThread.onmessage = function(data) {
     } else {
         peopleParagraph += "<ul>";
         for (var i = people.length - 1; i >= 0; i--) {
-            peopleParagraph += "<li>" + people[i].getName() + ":<br>&nbsp&nbspAge: " + Math.floor(people[i].age) +
-                "<br>&nbsp&nbspSex: " + people[i].sex +
-                (!people[i].father.exists ? "" : "<br>&nbsp&nbspFather: " + people[i].father.getName()) +
-                (!people[i].mother.exists ? "" : "<br>&nbsp&nbspMother: " + people[i].mother.getName()) +
-                (people[i].hunger == 0 ? "" : "<br>&nbsp&nbspHunger level: " + people[i].hunger.toFixed(2)) +
-                (!people[i].inRelationshipWith.exists ? "" : "<br>&nbsp&nbspIn a relationship with: " + people[i].inRelationshipWith.getName()) +
-                (people[i].work == "" ? "" : "<br>&nbsp&nbspCurrently working on: " + people[i].work) + "</li><br>";
+            peopleParagraph += "<li id='person" + people[i].personID + "'>" + people[i].getName();
+            if (people[i].personID == focusPerson) {
+                peopleParagraph += ":<br>&nbsp&nbspAge: " + Math.floor(people[i].age) +
+                    "<br>&nbsp&nbspSex: " + people[i].sex +
+                    (!people[i].father.exists ? "" : "<br>&nbsp&nbspFather: " + people[i].father.getName()) +
+                    (!people[i].mother.exists ? "" : "<br>&nbsp&nbspMother: " + people[i].mother.getName()) +
+                    (people[i].hunger == 0 ? "" : "<br>&nbsp&nbspHunger level: " + people[i].hunger.toFixed(2)) +
+                    (!people[i].inRelationshipWith.exists ? "" : "<br>&nbsp&nbspIn a relationship with: " + people[i].inRelationshipWith.getName()) +
+                    (people[i].work == "" ? "" : "<br>&nbsp&nbspCurrently working on: " + people[i].work);
+            }
+            peopleParagraph += "</li><br>";
         }
         peopleParagraph += "</ul>";
     }
@@ -295,18 +305,24 @@ gameloopThread.onmessage = function(data) {
     }
     resourceParagraph += "</ul>";
     resourceParagraph += "<h3>Misc. stats:</h3><ul>";
+    resourceParagraph += "<li>Year: " + Math.floor(yearsPassed) + "</li>";
     resourceParagraph += "<li>Population: " + people.length + "<ul>";
-    resourceParagraph += "<li>Child pop.: " + amtOfYoungPeople() + "</li>";
-    resourceParagraph += "<li>Working pop.: " + amtOfWorkingPeople() + "</li>";
-    resourceParagraph += "<li>Elder pop.: " + amtOfElderPeople() + "</li>";
-    resourceParagraph += "</ul></li><li>Year: " + Math.floor(yearsPassed) + "</li>";
-    resourceParagraph += "<li>Farms: " + farms + "<ul>"
-    resourceParagraph += "<li>Unattended farms: " + currentFarmsToBeGatheredFrom + "</li>"
-    resourceParagraph += "</ul></li>"
-    resourceParagraph += "<li>Houses: " + houses.length + "<ul>"
-    resourceParagraph += "<li>Unoccupied houses: " + (houses.length - amtOfPopulatedHouses()) + "</li>"
-    resourceParagraph += "</ul></li>"
-    resourceParagraph += "<li></li>"
+    resourceParagraph += "<li>Children: " + amtOfYoungPeople() + "</li>";
+    resourceParagraph += "<li>Adults: " + amtOfWorkingPeople() + "</li>";
+    resourceParagraph += "<li>Elders: " + amtOfElderPeople() + "</li>";
+    resourceParagraph += "</ul></li>";
+    resourceParagraph += "<li>Farms: " + farms + "<ul>";
+    resourceParagraph += "<li>Unattended farms: " + currentFarmsToBeGatheredFrom + "</li>";
+    resourceParagraph += "</ul></li>";
+    resourceParagraph += "<li>Houses: " + houses.length + "<ul>";
+    resourceParagraph += "<li>Unoccupied houses: " + (houses.length - amtOfPopulatedHouses()) + "</li>";
+    resourceParagraph += "</ul></li>";
+    var totalHunger = 0;
+    for (var i = 0; i < people.length; i++) {
+        totalHunger += people[i].hunger;
+    }
+    var avgHunger = totalHunger / people.length;
+    resourceParagraph += (avgHunger > 0 ? "<li>Average hunger: " + avgHunger.toFixed(1) + "</li>" : "");
     resourceParagraph += "</ul>";
 
     var processesParagraph = "<h3>Current works:</h3><ul>";
@@ -342,9 +358,10 @@ gameloopThread.onmessage = function(data) {
     }
     historyParagraph += "</ul>";
 
-    document.getElementById("peopleSheet").innerHTML = peopleParagraph;
-    document.getElementById("resources").innerHTML = resourceParagraph;
-    document.getElementById("processes").innerHTML = processesParagraph;
-    document.getElementById("history").innerHTML = historyParagraph;
+    focusPerson = -1;
+    $("#peopleSheet").html(peopleParagraph);
+    $("#resources").html(resourceParagraph);
+    $("#processes").html(processesParagraph);
+    $("#history").html(historyParagraph);
     gameloopThread.postMessage([UPS]);
 }

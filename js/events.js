@@ -99,20 +99,27 @@ chances.push([function(person) {
      *
      *  * The first people that come to life "don't have parents".
      */
-    function isNotRelative(person0, person1) {
-        // TODO: REMAKE THIS HORRIBLE LINE DEAR LORD
-        return (Math.random() < Math.pow(person0.confidence, 16) && person0 == person1) || (person0 != person1 && (Math.random() < 0.01 || (person0.father != person1 && person0.mother != person1 && ((person0.father.exists && person1.father.exists && person0.father!= person1.father && person0.mother != person1.mother) || (!person0.father.exists || !person1.father.exists)))));
-    }
-
-    if (person.inRelationshipWith.exists) {
-        return;
+    function isRelative(person0, person1) {
+        var siblings = person0.father == person1.father || person0.mother == person1.mother;
+        var isParent = person0 == person1.father || person0 == person1.mother;
+        var isChild = person0.father == person1 || person0.mother == person1;
+        return siblings && isParent && isChild;
     }
     for (var j = 0; j < people.length; j++) {
         var person1 = people[j];
-        if (isNotRelative(person, person1) && isNotRelative(person1, person) &&
-                person.age > WORKING_AGE && person1.age > WORKING_AGE &&
-                !person1.inRelationshipWith.exists && Math.random() < 0.2) {
-            if ((person.sex == person1.sex &&
+        // Assign all "blockers"
+        // True if person0 and person1 are the same person (or the person is very confident in him/herself)
+        var selfCheck = person == person1 && Math.random() > Math.pow(person.confidence,
+                (person.sexuality == "same" || person.sexuality == "any") ? 8 : 16);
+        // True if person0 is a close relative to person1
+        var relativeCheck = isRelative(person, person1);
+        // True if person is too young
+        var ageCheck = person.age < WORKING_AGE || person1.age < WORKING_AGE;
+        var affairCheck = person.inRelationshipWith.exists || person1.inRelationshipWith.exists;
+        // Roll dice & then roll the override-dice, because love conquers all "blockers"!
+        if (Math.random() < 0.2 && ((Math.random() < 0.0005) || !(selfCheck ||
+                relativeCheck || ageCheck || affairCheck))) {
+            if ((person == person1) || (person.sex == person1.sex &&
                     (person.sexuality == "any" || person.sexuality == "same") &&
                     (person1.sexuality == "any" || person1.sexuality == "same")) ||
                     (person.sex != person1.sex &&
