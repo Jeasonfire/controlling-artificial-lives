@@ -79,13 +79,13 @@ function gatherFood(automatic) {
         return;
     }
     currentFarmsToBeGatheredFrom--;
-    var newProcess = new Process(PROCESS_GATHERING_FOOD_NAME, (1.0 / YEARS_PER_SECOND) * 900, 200, function () {resources.food++;}, automatic);
+    var newProcess = new Process(PROCESS_GATHERING_FOOD_NAME, 900, 200, function () {resources.food++;}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
 
 function gatherBuild(automatic) {
-    var newProcess = new Process(PROCESS_BUILD_SUPPLIES_NAME, (1.0 / YEARS_PER_SECOND) * 1250, 200, function () {resources.build++;}, automatic);
+    var newProcess = new Process(PROCESS_BUILD_SUPPLIES_NAME, 1250, 200, function () {resources.build++;}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -95,7 +95,7 @@ function makeHouse(automatic) {
         return;
     }
     resources.build -= 5;
-    var newProcess = new Process(PROCESS_BUILD_HOUSE_NAME, (1.0 / YEARS_PER_SECOND) * 7500, 200, function () {houses.push(new House());}, automatic);
+    var newProcess = new Process(PROCESS_BUILD_HOUSE_NAME, 7500, 200, function () {houses.push(new House());}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -105,7 +105,7 @@ function makeFarm(automatic) {
         return;
     }
     resources.build -= 2;
-    var newProcess = new Process(PROCESS_BUILD_FARM_NAME, (1.0 / YEARS_PER_SECOND) * 1000, 200, function () {farms++}, automatic);
+    var newProcess = new Process(PROCESS_BUILD_FARM_NAME, 1000, 200, function () {farms++}, automatic);
     newProcess.assignWorker(people);
     processes.push(newProcess);
 }
@@ -246,14 +246,14 @@ function update(delta) {
         updateFocus(people[i]);
         people[i].age += YEARS_PER_SECOND * delta;
         if (resources.food >= people[i].foodConsumption() * delta) {
-            resources.food -= people[i].foodConsumption() * YEARS_PER_SECOND * delta;
+            resources.food -= people[i].foodConsumption() * delta;
             if (resources.food > 0 && people[i].hunger > 0) {
                 var amt = Math.min(resources.food, people[i].hunger);
                 people[i].hunger -= amt;
                 resources.food -= amt;
             }
         } else {
-            people[i].hunger += people[i].foodConsumption() * YEARS_PER_SECOND * delta;
+            people[i].hunger += people[i].foodConsumption() * delta;
         }
         for (var j = 0; j < houses.length; j++) {
             houses[j].assignHouseFor(people[i]);
@@ -264,8 +264,8 @@ function update(delta) {
 }
 
 /* The game loop code (a very hacky loop system that works on its own thread with a worker) */
-var UPS = 30; // Game loops per second
-var YEARS_PER_SECOND = 0.1;
+var UPS = 200; // Game loops per second
+var YEARS_PER_SECOND = 10;
 var lastTime = Date.now();
 var gameloopThread = new Worker("js/loopWorker.js");
 gameloopThread.postMessage([UPS]);
@@ -285,7 +285,8 @@ gameloopThread.onmessage = function(data) {
         for (var i = people.length - 1; i >= 0; i--) {
             peopleParagraph += "<li id='person" + people[i].personID + "'>" + people[i].getName();
             if (people[i].personID == focusPerson) {
-                peopleParagraph += ":<br>&nbsp&nbspAge: " + Math.floor(people[i].age) +
+                peopleParagraph += " (" + people[i].getSexualityLetter() +
+                    "):<br>&nbsp&nbspAge: " + Math.floor(people[i].age) +
                     "<br>&nbsp&nbspSex: " + people[i].sex +
                     (!people[i].father.exists ? "" : "<br>&nbsp&nbspFather: " + people[i].father.getName()) +
                     (!people[i].mother.exists ? "" : "<br>&nbsp&nbspMother: " + people[i].mother.getName()) +

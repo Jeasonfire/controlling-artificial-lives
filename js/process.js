@@ -19,7 +19,7 @@ function Process(name, time, degreeOfVariance, onFinish, automatic) {
     if (degreeOfVariance === undefined) {
         degreeOfVariance = 0;
     }
-    this.time = time + Math.random() * degreeOfVariance * 2 - degreeOfVariance;
+    this.time = (time + Math.random() * degreeOfVariance * 2 - degreeOfVariance) * YEARS_PER_SECOND;
     this.name = name;
     this.startingTime = -1;
     this.worker = new Person(undefined, undefined, false);

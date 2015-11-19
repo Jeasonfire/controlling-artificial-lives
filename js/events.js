@@ -32,7 +32,7 @@ function roll(chance) {
 }
 
 function getChance(chance) {
-    return chance * currentDelta;
+    return chance * currentDelta * YEARS_PER_SECOND;
 }
 
 /* Example:
@@ -55,8 +55,8 @@ chances.push([function(person) {
     if (person.sex == person.inRelationshipWith.sex) {
         return 0;
     }
-    if (person.age < WORKING_AGE || person.inRelationshipWith.age < WORKING_AGE ||
-        person.age > ELDER_AGE || person.age > ELDER_AGE) {
+    if (person.age < WORKING_AGE || person.inRelationshipWith.age < WORKING_AGE
+        || person.age > ELDER_AGE || person.age > ELDER_AGE) {
         return 0;
     }
     if (person.house == -1) {

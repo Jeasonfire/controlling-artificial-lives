@@ -90,6 +90,24 @@ Person.prototype = {
         return "<em style='color:" + (this.sex == "male" ? "cyan" : "orange") + ";'>" + this.name + (this.surname != "" ? " " + this.surname : "") + "</em>";
     },
 
+    getSexualityLetter: function () {
+        if (this.sexuality == "any") {
+            return "B";
+        }
+        if (this.sexuality == "same") {
+            if (this.sex == "male") {
+                return "G";
+            }
+            if (this.sex == "female") {
+                return "L";
+            }
+        }
+        if (this.sexuality == "opposite") {
+            return "S";
+        }
+        return "?";
+    },
+
     eligibleForWork: function() {
         if (!this.exists) {
             return false;
@@ -116,7 +134,9 @@ Person.prototype = {
     },
 
     foodConsumption: function() {
-        return MAX_FOOD_CONSUMPTION * (1.0 - Math.abs(Math.min(this.age, ELDER_AGE) - ELDER_AGE / 2.0) / (ELDER_AGE + 1.0));
+        return MAX_FOOD_CONSUMPTION * (1.0 - Math.abs(
+            Math.min(this.age, ELDER_AGE) - ELDER_AGE / 2.0) /
+                (ELDER_AGE + 1.0)) * YEARS_PER_SECOND;
     },
 
     isChild: function() {
