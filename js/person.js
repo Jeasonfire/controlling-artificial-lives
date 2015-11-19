@@ -134,9 +134,11 @@ Person.prototype = {
     },
 
     foodConsumption: function() {
-        return MAX_FOOD_CONSUMPTION * (1.0 - Math.abs(
-            Math.min(this.age, ELDER_AGE) - ELDER_AGE / 2.0) /
-                (ELDER_AGE + 1.0)) * YEARS_PER_SECOND;
+        return this.yearlyFoodConsumption() * YEARS_PER_SECOND;
+    },
+
+    yearlyFoodConsumption: function() {
+        return MAX_FOOD_CONSUMPTION * (1.0 - Math.abs(Math.min(this.age, ELDER_AGE) - ELDER_AGE / 2.0) / (ELDER_AGE + 1.0));
     },
 
     isChild: function() {

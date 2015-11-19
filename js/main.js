@@ -187,7 +187,7 @@ var yearlyStats = {
     targetFood: function() {
         var total = 0;
         for (var i = 0; i < people.length; i++) {
-            total += people[i].foodConsumption();
+            total += people[i].yearlyFoodConsumption();
         }
         if (this.currentFood < total * FOOD_STORAGE_BUFFER_MULTIPLIER) {
             total *= FOOD_STORAGE_BUFFER_MULTIPLIER;
@@ -199,7 +199,7 @@ function yearlyUpdate() {
     currentFarmsToBeGatheredFrom = farms;
 
     yearlyStats.currentFood = resources.food;
-    var neededFood = yearlyStats.targetFood();
+    var neededFood = yearlyStats.targetFood() - resources.food;
     var amt = amtOfWorkingPeople() * 2;
     if (neededFood > amt) {
         neededFood = amt;
@@ -264,8 +264,8 @@ function update(delta) {
 }
 
 /* The game loop code (a very hacky loop system that works on its own thread with a worker) */
-var UPS = 200; // Game loops per second
-var YEARS_PER_SECOND = 10;
+var UPS = 30; // Game loops per second
+var YEARS_PER_SECOND = 0.4;
 var lastTime = Date.now();
 var gameloopThread = new Worker("js/loopWorker.js");
 gameloopThread.postMessage([UPS]);

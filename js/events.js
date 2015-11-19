@@ -62,7 +62,7 @@ chances.push([function(person) {
     if (person.house == -1) {
         return 0;
     }
-    return 0.02;
+    return 0.05;
 }, function(person) {
     var father, mother;
     if (person.sex == "male") {
@@ -77,7 +77,7 @@ chances.push([function(person) {
 
 // Chance of death
 chances.push([function(person) {
-    var ageDeath = Math.pow(Math.min(person.age, ELDER_AGE) / (ELDER_AGE + 1.0), 8);
+    var ageDeath = Math.pow(Math.min(person.age, ELDER_AGE) / (ELDER_AGE + 1.0), 12);
     var hungerDeath = Math.pow(person.hunger / MAX_HUNGER_LEVEL, 4);
     return ageDeath + hungerDeath - (ageDeath * hungerDeath);
 }, function(person) {
@@ -88,7 +88,7 @@ chances.push([function(person) {
 
 // Chance of two people getting in a relationship
 chances.push([function(person) {
-    return 0.2;
+    return 0.25;
 }, function(person) {
     /*
      * This function prevents incestuous relationships (which are still probable,
