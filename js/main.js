@@ -24,7 +24,7 @@ var PROCESS_BUILD_FARM_NAME = "Raising a barn";
 
 var timeSinceLastMagicalBirth = TIME_BETWEEN_MAGICAL_BIRTHS;
 var yearsPassed = 0;
-var hideAutomaticProcesses = true;
+var hideAutomaticProcesses = false;
 var focusPerson = -1;
 
 /* Add some definitely male and female people so the people will survive at
